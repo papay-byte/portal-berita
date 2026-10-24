@@ -4,38 +4,46 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
 class Berita extends Model
 {
-    // Kolom baru (kategori_id, tagline) wajib ada di $fillable
     protected $fillable = [
-        'kategori_id', 'judul', 'slug', 'tanggal', 'penulis',
-        'ringkasan', 'konten', 'gambar', 
+        'kategori_id', 'user_id', 'judul', 'slug', 'tanggal',
+        'ringkasan', 'konten', 'gambar',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
     ];
 
-    // Relasi: satu berita MILIK SATU kategori.
-    // Nama method ini ('kategori') harus sama dengan yang dipanggil di with('kategori')
+    // Berita milik satu kategori. Pemakaian: $berita->kategori->nama
     public function kategori(): BelongsTo
     {
         return $this->belongsTo(Kategori::class);
     }
 
-    // Accessor: "cikandung,dusun,2026" → ['cikandung','dusun','2026']
-    public function getTaglineListAttribute(): array
+    // Berita ditulis satu user. Pemakaian: $berita->user->name
+    public function user(): BelongsTo
     {
-        if (!$this->tagline) {
-            return [];
-        }
-
-        return array_filter(array_map('trim', explode(',', $this->tagline)));
+        return $this->belongsTo(User::class);
     }
 
-    // Accessor gambar: URL lengkap dipakai langsung, selain itu dianggap file di storage lokal
+    // Many-to-Many: berita punya banyak tag lewat tabel pivot berita_tag
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class);
+    }
+
+    // Aturan hak akses: admin boleh semua, editor hanya boleh mengubah beritanya sendiri.
+    // Dipakai di Controller dan Blade supaya aturannya hanya ada di satu tempat.
+    public function bisaDiubahOleh(?User $user): bool
+    {
+        return $user !== null && ($user->isAdmin() || $user->id === $this->user_id);
+    }
+
+    // Accessor: URL lengkap dipakai langsung, selain itu dianggap file di storage lokal
     public function getGambarUrlAttribute(): ?string
     {
         if (!$this->gambar) {
@@ -47,7 +55,7 @@ class Berita extends Model
             : asset('storage/' . $this->gambar);
     }
 
-    // Route model binding memakai kolom 'slug', bukan 'id'
+    // Route model binding memakai slug, bukan id
     public function getRouteKeyName(): string
     {
         return 'slug';

@@ -9,8 +9,7 @@ class Kategori extends Model
 {
     protected $fillable = ['nama', 'slug'];
 
-    // Relasi: satu kategori MEMILIKI BANYAK berita.
-    // Pemakaian: $kategori->beritas
+    // Satu kategori memiliki banyak berita
     public function beritas(): HasMany
     {
         return $this->hasMany(Berita::class);

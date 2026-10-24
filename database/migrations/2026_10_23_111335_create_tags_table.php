@@ -8,16 +8,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('kategoris', function (Blueprint $table) {
+        Schema::create('tags', function (Blueprint $table) {
             $table->id();
-            $table->string('nama');             // Nama kategori, mis. "Olahraga"
-            $table->string('slug')->unique();   // Versi URL, mis. "olahraga"
+            $table->string('nama');
+            $table->string('slug')->unique();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('kategoris');
+        Schema::dropIfExists('tags');
     }
 };
